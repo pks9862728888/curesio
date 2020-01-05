@@ -37,10 +37,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = PhoneNumberField(_('Phone'), null=True, blank=True)
     date_of_birth = models.DateField(
         _('Date of Birth'), max_length=10, null=True, blank=True)
-    city = models.CharField(
+    city = models.TextField(
         _('City'), max_length=1024, null=True, blank=True)
     country = CountryField(
-        _('Country'), blank_label='(Select country)', null=True, blank=True)
+        _('Country'), max_length=1024, null=True, blank=True)
     postal_code = models.CharField(
         _('ZIP / Postal Code'), max_length=12, null=True, blank=True)
     address = models.TextField(

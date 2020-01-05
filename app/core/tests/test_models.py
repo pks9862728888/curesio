@@ -39,7 +39,7 @@ class ModelTests(TestCase):
         last_name = 'Pvt LTD',
         date_of_birth = '1997-12-12'        # should be in YYYY-MM-DD
         phone = '+919862878887'
-        country = 'India'
+        country = 'IN'
 
         user = get_user_model().objects.create_user(
             email='test@gmail.com',
