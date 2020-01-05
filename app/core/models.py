@@ -37,7 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = PhoneNumberField(_('Phone'), null=True, blank=True)
     date_of_birth = models.DateField(
         _('Date of Birth'), max_length=10, null=True, blank=True)
-    city = models.TextField(
+    city = models.CharField(
         _('City'), max_length=1024, null=True, blank=True)
     country = CountryField(
         _('Country'), max_length=1024, null=True, blank=True)
@@ -64,7 +64,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Language(models.Model):
     """Creates language model"""
     name = models.CharField(max_length=30, unique=True)
-    code = models.CharField(max_length=3, unique=True)
+    code = models.CharField(max_length=6, unique=True)
 
     def __str__(self):
         return self.name + '(' + self.code + ')'
