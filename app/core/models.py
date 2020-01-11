@@ -62,6 +62,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', ]
 
     def __str__(self):
         """String representation of user model"""
@@ -95,19 +96,19 @@ class UserProfile(models.Model, Languages):
         _('Primary language'),
         max_length=3,
         choices=Languages.LANGUAGE_IN_LANGUAGE_CHOICES,
-        default=Languages.ENGLISH
+        null=True, blank=True
     )
     secondary_language = models.CharField(
         _('Secondary language'),
         max_length=3,
         choices=Languages.LANGUAGE_IN_LANGUAGE_CHOICES,
-        default=Languages.ENGLISH
+        null=True, blank=True
     )
     tertiary_language = models.CharField(
         _('Tertiary language'),
         max_length=3,
         choices=Languages.LANGUAGE_IN_LANGUAGE_CHOICES,
-        default=Languages.ENGLISH
+        null=True, blank=True
     )
 
     def __str__(self):

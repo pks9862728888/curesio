@@ -50,16 +50,16 @@ class ModelTests(TestCase):
                 'test@gmail.com', 'testPass', ' '
             )
 
-    def test_create_user_model_with_default_langugae_successful(self):
+    def test_create_user_model_with_default_language_successful(self):
         """Test creating user model with default english language success"""
         user = get_user_model().objects.create_user(
             email='test@gmail.com',
             password='testpass@1234',
             username='usernameiscool'
         )
-        self.assertEqual(user.profile.primary_language, Languages.ENGLISH)
-        self.assertEqual(user.profile.secondary_language, Languages.ENGLISH)
-        self.assertEqual(user.profile.tertiary_language, Languages.ENGLISH)
+        self.assertEqual(user.profile.primary_language, None)
+        self.assertEqual(user.profile.secondary_language, None)
+        self.assertEqual(user.profile.tertiary_language, None)
 
     def test_create_user_model_with_user_detail_successful(self):
         """Test that user detail is added successfully while registration"""

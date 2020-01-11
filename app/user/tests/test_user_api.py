@@ -195,9 +195,9 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res_profile['country'], self.profile.country)
         self.assertEqual(res_profile['postal_code'], self.profile.postal_code)
         self.assertEqual(res_profile['address'], self.profile.address)
-        self.assertEqual(res_profile['primary_language'], Languages.ENGLISH)
-        self.assertEqual(res_profile['secondary_language'], Languages.ENGLISH)
-        self.assertEqual(res_profile['tertiary_language'], Languages.ENGLISH)
+        self.assertEqual(res_profile['primary_language'], None)
+        self.assertEqual(res_profile['secondary_language'], None)
+        self.assertEqual(res_profile['tertiary_language'], None)
 
     def test_post_me_not_allowed(self):
         """Test that post is not allowed on me url"""
@@ -242,7 +242,7 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res_profile['secondary_language'],
                          payload['profile']['secondary_language'])
         self.assertEqual(res_profile['tertiary_language'],
-                         Languages.ENGLISH)
+                         None)
 
     def test_cannot_update_details_of_another_user(self):
         """Test that details of another user can not be changed"""

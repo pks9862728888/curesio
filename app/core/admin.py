@@ -18,14 +18,20 @@ class CustomUserAdmin(UserAdmin):
         'email', 'username', 'is_superuser', 'is_staff', 'is_active'
     ]
     inlines = (ProfileInline, )
-    search_fields = ['email', 'username']
+    search_fields = ['email', 'username', ]
     fieldsets = (
-        (None, {'fields': ('email', 'username', 'password')}),
+        (
+            None,
+            {'fields': ('email', 'username', 'password')}
+        ),
         (
             _('Permissions'),
             {'fields': ('is_active', 'is_staff', 'is_superuser')}
         ),
-        (_('Important Dates'), {'fields': ('last_login', )})
+        (
+            _('Important Dates'),
+            {'fields': ('last_login', )}
+        )
     )
     add_fieldsets = (
         (None, {
@@ -41,10 +47,35 @@ class CustomUserProfile(admin.ModelAdmin):
                     'city', 'country', 'phone',
                     'primary_language', 'secondary_language',
                     'tertiary_language']
-    search_fields = ['user', 'first_name',
+    search_fields = ['user__username', 'first_name',
                      'last_name', 'city', 'country',
                      'primary_language', 'secondary_language',
                      'tertiary_language']
+    fieldsets = (
+        (
+            _('Personal details'),
+            {
+                'fields': ('first_name', 'last_name', 'date_of_birth')
+            }
+        ),
+        (
+            _('Contact details'),
+            {
+                'fields': (
+                    'phone', 'city', 'country', 'postal_code', 'address'
+                )
+            }
+        ),
+        (
+            _('Language preferences'),
+            {
+                'fields': (
+                    'primary_language',
+                    'secondary_language',
+                    'tertiary_language')
+            }
+        )
+    )
 
 
 admin.site.register(models.User, CustomUserAdmin)
