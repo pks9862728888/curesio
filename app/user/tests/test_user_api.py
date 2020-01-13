@@ -1,3 +1,6 @@
+import tempfile
+from PIL import Image
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -8,9 +11,15 @@ from rest_framework import status
 from core.models import UserProfile, Languages
 
 
+# Creating urls for making various api calls
 CREATE_USER_URL = reverse("user:create")
 TOKEN_URL = reverse("user:token")
 ME_URL = reverse("user:me")
+
+
+def create_user_image_upload_url(user_id):
+    """Creates url for uploading image for user"""
+    return reverse('user:user-image-upload')
 
 
 def create_new_user(**kwargs):
@@ -209,7 +218,6 @@ class PrivateUserApiTests(TestCase):
         """Test updating the user for authenticated user"""
         payload = {
             'email': 'test@curesio.com',
-            'password': 'thenew@password44',
             'username': 'newusername',
             'profile': {
                 'first_name': 'DarkKnight',
@@ -226,7 +234,6 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(self.user.email, payload['email'])
         self.assertEqual(self.user.username, payload['username'])
-        self.assertTrue(self.user.check_password(payload['password']))
 
         self.assertIn('created_date', res.data)
         self.assertEqual(res_profile['first_name'],
@@ -260,5 +267,52 @@ class PrivateUserApiTests(TestCase):
         }
 
         res = self.client.patch(ME_URL, changed_payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class UserImageUploadTests(TestCase):
+    """Tests for uploading user profile picture"""
+
+    def setUp(self):
+        """Setup for running all the tests"""
+        self.user = get_user_model().objects.create_user(
+            email='temp@curesio.com',
+            password='testpass@4',
+            username='tempuser4'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def tearDown(self):
+        """Clean up code after running the tests"""
+        self.user.profile.image.delete()
+
+    def test_user_profile_picture_upload(self):
+        """Test that uploading profile picture is successful"""
+        image_upload_url = create_user_image_upload_url(self.user.pk)
+
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            img = Image.new('RGB', (10, 10))
+            img.save(ntf, format='JPEG')
+            ntf.seek(0)
+            res = self.client.post(
+                image_upload_url,
+                {'image': ntf},
+                format="multipart"
+            )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+
+    def test_user_profile_picture_invalid_image_fails(self):
+        """Test that invalid image upload fails"""
+        image_upload_url = create_user_image_upload_url(self.user.pk)
+
+        res = self.client.post(
+            image_upload_url,
+            {'image': 'invalid image'},
+            format="multipart"
+        )
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

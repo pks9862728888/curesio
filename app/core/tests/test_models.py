@@ -1,7 +1,13 @@
+import os
+import datetime
+
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from core.models import Languages, UserProfile
+from core import models
 
 
 class ModelTests(TestCase):
@@ -130,3 +136,17 @@ class ModelTests(TestCase):
         user_profile = UserProfile.objects.get(user=user)
 
         self.assertEqual(str(user_profile), email)
+
+    @patch('uuid.uuid4')
+    def test_image_upload_url_uuid(self, mock_url):
+        """Test that user image is uploaded in the correct location"""
+        uuid = 'test-uuid'
+        mock_url.return_value = uuid
+
+        file_path = models.user_image_upload_file_path(None, 'myimage.jpg')
+
+        date = datetime.date.today()
+        ini_path = f'pictures/uploads/user/{date.year}/{date.month}/{date.day}'
+        expected_path = os.path.join(ini_path, f'{uuid}.jpg')
+
+        self.assertEqual(file_path, expected_path)

@@ -59,6 +59,12 @@ class CustomUserProfile(admin.ModelAdmin):
             }
         ),
         (
+            _('Avatar'),
+            {
+                'fields': ('image', )
+            }
+        ),
+        (
             _('Contact details'),
             {
                 'fields': (

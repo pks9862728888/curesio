@@ -1,3 +1,6 @@
+import os
+import uuid
+import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
                                        PermissionsMixin
@@ -7,6 +10,19 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from phonenumber_field.modelfields import PhoneNumberField
 from django_countries.fields import CountryField
+
+from rest_framework.authtoken.models import Token
+
+
+def user_image_upload_file_path(instance, filename):
+    """Generates file path for uploading user images"""
+    extension = filename.split('.')[-1]
+    file_name = f'{uuid.uuid4()}.{extension}'
+    date = datetime.date.today()
+    ini_path = f'pictures/uploads/user/{date.year}/{date.month}/{date.day}/'
+    full_path = os.path.join(ini_path, file_name)
+
+    return full_path
 
 
 # Languages available as options in language field
@@ -36,6 +52,7 @@ class UserManager(BaseUserManager):
                           username=username, **extra_kwargs)
         user.set_password(password)
         user.save(using=self._db)
+        Token.objects.create(user=user)
 
         return user
 
@@ -74,8 +91,7 @@ class UserProfile(models.Model, Languages):
     user = models.OneToOneField(
         'User',
         related_name='profile',
-        on_delete=models.CASCADE,
-        primary_key=True
+        on_delete=models.CASCADE
     )
     first_name = models.CharField(
         _('First Name'), max_length=255, blank=True)
@@ -110,6 +126,13 @@ class UserProfile(models.Model, Languages):
         choices=Languages.LANGUAGE_IN_LANGUAGE_CHOICES,
         null=True, blank=True
     )
+    image = models.ImageField(
+        _('Image'),
+        upload_to=user_image_upload_file_path,
+        null=True,
+        blank=True,
+        max_length=1024
+    )
 
     def __str__(self):
         """String representation"""
@@ -117,23 +140,8 @@ class UserProfile(models.Model, Languages):
 
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """Creates user profile each time a new user is created"""
+def user_is_created(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Saves user profile when any modification is made"""
-    instance.profile.save()
-
-
-# class Language(models.Model):
-#     """Creates language model"""
-#     name = models.CharField(max_length=30, unique=True)
-#     code = models.CharField(max_length=6, unique=True,
-#                             primary_key=True)
-
-#     def __str__(self):
-#         return self.name + '(' + self.code + ')'
+    else:
+        instance.profile.save()

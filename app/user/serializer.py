@@ -17,12 +17,14 @@ class ProfileSerializer(CountryFieldMixin, serializers.ModelSerializer):
         model = UserProfile
         fields = ('first_name', 'last_name', 'phone',
                   'date_of_birth', 'city', 'country',
-                  'postal_code', 'address', 'primary_language',
-                  'secondary_language', 'tertiary_language')
+                  'postal_code', 'address', 'image',
+                  'primary_language', 'secondary_language',
+                  'tertiary_language')
+        read_only_fields = ('image', )
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
-    """Serializer for users object"""
+    """Serializer for creating user"""
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -35,25 +37,19 @@ class CreateUserSerializer(serializers.ModelSerializer):
         fields = ('email', 'password', 'username')
 
     def create(self, validated_data):
-        """Create a new user with encrypted password and return it"""
+        """Create a new user with encrypted password and return it."""
         validated_data.pop('profile', None)
         return get_user_model().objects.create_user(**validated_data)
 
 
 class ManageUserSerializer(serializers.ModelSerializer):
-    """Serializer for users object"""
+    """Serializer for editing users details and profile details"""
     profile = ProfileSerializer(required=False)
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={'input_type': 'password', 'placeholder': 'Password'},
-        min_length=8
-    )
 
     class Meta:
         model = get_user_model()
         fields = (
-            'id', 'email', 'password',
+            'id', 'email',
             'username', 'created_date', 'profile'
         )
         read_only_fields = ('id', 'created_date', )
@@ -98,6 +94,25 @@ class ManageUserSerializer(serializers.ModelSerializer):
             profile.save()
 
         return instance
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Minimal serializer for supporting user image upload field"""
+
+    class Meta:
+        model = get_user_model()
+        fields = ('username', )
+
+
+class TempSerializer(serializers.ModelSerializer):
+    """Serializer for user image upload"""
+    user = UserSerializer(read_only=True)
+    image = serializers.ImageField(allow_null=True, use_url=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ('id', 'user', 'image')
+        read_only_fields = ('id', 'user')
 
 
 class AuthTokenSerializer(serializers.Serializer):
