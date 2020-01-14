@@ -4,10 +4,13 @@ import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, \
                                        PermissionsMixin
+from django.core.validators import validate_image_file_extension, \
+                                   EmailValidator
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from django.dispatch import receiver
 from django.db.models.signals import post_save
+
 from phonenumber_field.modelfields import PhoneNumberField
 from django_countries.fields import CountryField
 
@@ -15,7 +18,7 @@ from rest_framework.authtoken.models import Token
 
 
 def user_image_upload_file_path(instance, filename):
-    """Generates file path for uploading user images"""
+    """Generates file path for uploading user images in user profile"""
     extension = filename.split('.')[-1]
     file_name = f'{uuid.uuid4()}.{extension}'
     date = datetime.date.today()
@@ -69,7 +72,9 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """Creates user model that supports using email as username"""
-    email = models.EmailField(_('Email'), max_length=255, unique=True)
+    email = models.EmailField(_('Email'),
+                              max_length=255, unique=True,
+                              validators=(EmailValidator, ))
     username = models.CharField(_('Username'), max_length=30, unique=True)
     is_active = models.BooleanField(_('Is Active'), default=True)
     is_staff = models.BooleanField(_('Is Staff'), default=False)
@@ -131,7 +136,8 @@ class UserProfile(models.Model, Languages):
         upload_to=user_image_upload_file_path,
         null=True,
         blank=True,
-        max_length=1024
+        max_length=1024,
+        validators=(validate_image_file_extension,)
     )
 
     def __str__(self):

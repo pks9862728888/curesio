@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.utils.translation import ugettext_lazy as _
+
 from rest_framework import generics, authentication, permissions,\
      status
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -9,6 +11,18 @@ from rest_framework.views import APIView
 
 from . import serializer
 from core import models
+
+
+def check_file_size_limit(picture_size, size_limit):
+    """
+    Returns true if the image has valid size limit.
+
+    size_limit: in bytes
+    """
+    if picture_size > size_limit:
+        return False
+    else:
+        return True
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -53,7 +67,7 @@ class UserImageUploadView(APIView):
         ser = serializer.TempSerializer(
             user_profile, data=data, context={"request": request})
 
-        # Returniing appropariate response
+        # Returning appropariate response
         if ser.is_valid():
             return_ser_data = {'id': ser.data.get('id'),
                                'image': ser.data.get('image')}
@@ -76,6 +90,14 @@ class UserImageUploadView(APIView):
 
         if ser.is_valid():
             if ser.validated_data:
+                # Checking for size limit of uploaded file(max 2 Mb)
+                # Converting 20Mb = 20 * 1024 * 1024 bytes = 20971520 bytes
+                if not check_file_size_limit(request.data.get('image').size,
+                                             size_limit=20971520):
+                    msg = _('File size too large. Maximum allowed size: 20 Mb')
+                    res = {'image': [msg]}
+                    return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
                 # Deleting the old image before uploading new image
                 if user_profile.image:
                     user_profile.image.delete()
