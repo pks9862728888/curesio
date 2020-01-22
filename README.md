@@ -129,3 +129,27 @@ Source code for our medical tourism website
     }
 }
 ```
+
+### Doctor Token Authentication url
+
+**Allowed Methods:** POST
+
+**Inactive account error format:**
+
+```
+{
+    "non_field_errors": [
+        "Account is inactive. Please wait for activation."
+    ]
+}
+```
+
+**Validation error format:**
+
+```
+{
+    "non_field_errors": [
+        "Unable to authenticate with provided credentials."
+    ]
+}
+```
