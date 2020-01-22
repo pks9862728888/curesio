@@ -66,7 +66,8 @@ Source code for our medical tourism website
 }
 ```
 
-**Response format after successful signup: **
+**Response format after successful signup:**
+
 ```
 {
     "email": "",
@@ -93,5 +94,38 @@ Source code for our medical tourism website
     "is_active": false,
     "is_doctor": true,
     "is_staff": false
+}
+```
+
+**Validation errors format:**
+
+```
+{
+    "email": [
+        "This field may not be blank."
+    ],
+    "password": [
+        "This field may not be blank."
+    ],
+    "username": [
+        "This field may not be blank."
+    ],
+    "profile": {
+        "first_name": [
+            "This field may not be blank."
+        ],
+        "last_name": [
+            "This field may not be blank."
+        ],
+        "city": [
+            "This field may not be blank."
+        ],
+        "country": [
+            "This field may not be null."
+        ],
+        "primary_language": [
+            "This field may not be null."
+        ]
+    }
 }
 ```
