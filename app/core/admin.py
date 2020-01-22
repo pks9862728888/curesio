@@ -124,6 +124,33 @@ class CustomUserProfile(admin.ModelAdmin):
     )
 
 
+class CustomProcedure(admin.ModelAdmin):
+    """Customising the procedure page"""
+    list_display = ('name', 'speciality', 'days_in_hospital',
+                    'days_in_destination')
+    search_fields = ('name', 'speciality',)
+    list_filter = ('speciality', )
+    fieldsets = (
+        (None, {
+            'fields': (
+                'name', 'speciality'
+            )
+        }),
+        (_('Duration'), {
+            'fields': (
+                'days_in_hospital', 'days_in_destination',
+                'duration_minutes'
+            )
+        }),
+        (_('Additional details'), {
+            'fields': (
+                'overview', 'other_details'
+            )
+        }),
+    )
+
+
 admin.site.register(models.User, CustomUserAdmin)
 admin.site.register(models.UserProfile, CustomUserProfile)
 admin.site.register(models.Doctor)
+admin.site.register(models.Procedure, CustomProcedure)

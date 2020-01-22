@@ -207,3 +207,26 @@ def user_is_created(sender, instance, created, **kwargs):
         # Saving doctor model
         if instance.is_doctor:
             instance.doctor_profile.save()
+
+
+class Procedure(models.Model):
+    """Model to store procedure details"""
+    name = models.CharField(_('Name'), max_length=50, unique=True)
+    speciality = models.CharField(_('Speciality'), max_length=40)
+    days_in_hospital = models.IntegerField(_('Days in hospital'))
+    days_in_destination = models.IntegerField(_('Days in destination'))
+    duration_minutes = models.IntegerField(_('Duration in minutes'))
+    overview = models.TextField(_('Overview'), max_length=1000)
+    other_details = models.TextField(
+        _('Other details'), max_length=1000, blank=True
+    )
+
+    def save(self, *args, **kwargs):
+        """Overriting save method to save fields in lower case"""
+        self.name = self.name.lower()
+        self.speciality = self.speciality.lower()
+        super(Procedure, self).save(*args, **kwargs)
+
+    def __str__(self):
+        """Returns string representation of the model"""
+        return self.name.capitalize()

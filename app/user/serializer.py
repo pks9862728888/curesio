@@ -63,6 +63,7 @@ class ManageUserSerializer(serializers.ModelSerializer):
         validated_data.pop('password', None)
         user_profile_data = validated_data.pop('profile', None)
         validated_data.pop('doctor_profile', None)
+        validated_data.pop('email', None)
         profile = instance.profile
 
         user = super().update(instance, validated_data)

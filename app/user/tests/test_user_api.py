@@ -217,7 +217,6 @@ class PrivateUserApiTests(TestCase):
     def test_partial_update_user_profile(self):
         """Test updating the user for authenticated user"""
         payload = {
-            'email': 'test@curesio.com',
             'username': 'newusername',
             'profile': {
                 'first_name': 'DarkKnight',
@@ -232,7 +231,6 @@ class PrivateUserApiTests(TestCase):
         res_profile = dict(res.data['profile'])
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.user.email, payload['email'])
         self.assertEqual(self.user.username, payload['username'])
 
         self.assertIn('created_date', res.data)

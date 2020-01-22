@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'django_countries',
     'core',
     'user',
-    'doctor'
+    'doctor',
+    'staff'
 ]
 
 MIDDLEWARE = [

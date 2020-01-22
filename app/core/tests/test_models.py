@@ -204,3 +204,47 @@ class DoctorTests(TestCase):
         self.assertEqual(doctor_profile.experience, 5.0)
         self.assertEqual(doctor_profile.qualification, '')
         self.assertEqual(doctor_profile.highlights, '')
+
+
+class ProcedureTests(TestCase):
+    """Tests the procedure model"""
+
+    def test_procedure_add_success(self):
+        """Test that adding procedure is success"""
+        payload = {
+            'name': "Knee Replacement",
+            'speciality': "Orthopedics",
+            'days_in_hospital': 2,
+            'days_in_destination': 2,
+            'duration_minutes': 120,
+            'overview': '<strong>Bla</strong> bla bla',
+            'other_details': "none"
+        }
+
+        models.Procedure.objects.create(
+            name=payload['name'],
+            speciality=payload['speciality'],
+            days_in_hospital=payload['days_in_hospital'],
+            days_in_destination=payload['days_in_destination'],
+            duration_minutes=payload['duration_minutes'],
+            overview=payload['overview'],
+            other_details=payload['other_details']
+        )
+
+        procedure = models.Procedure.objects.get(
+            name=payload['name'].lower()
+        )
+
+        self.assertEqual(procedure.name,
+                         payload['name'].lower())
+        self.assertEqual(procedure.speciality,
+                         payload['speciality'].lower())
+        self.assertEqual(procedure.days_in_hospital,
+                         payload['days_in_hospital'])
+        self.assertEqual(procedure.days_in_destination,
+                         payload['days_in_destination'])
+        self.assertEqual(procedure.duration_minutes,
+                         payload['duration_minutes'])
+        self.assertEqual(procedure.overview, payload['overview'])
+        self.assertEqual(procedure.other_details,
+                         payload['other_details'])
