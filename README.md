@@ -31,7 +31,7 @@ Source code for our medical tourism website
 
 ## Fields and allowed methods for API URLs:
 
-###### Doctor signup url
+### Doctor signup url
 
 **Methods:** POST
 
