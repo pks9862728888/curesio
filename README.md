@@ -66,7 +66,7 @@ Source code for our medical tourism website
 }
 ```
 
-*Response format after successful signup: *
+**Response format after successful signup: **
 ```
 {
     "email": "",
