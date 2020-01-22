@@ -3,6 +3,7 @@ Source code for our medical tourism website
 
 # API Endpoints
 **URLs**
+
 *Admin view*
 1. **Admin login:** https:www.curesio.com/admin/
 
