@@ -5,7 +5,7 @@ from . import views
 app_name = 'user'
 
 urlpatterns = [
-    path('create/', views.CreateUserView.as_view(), name='create'),
+    path('signup/', views.CreateUserView.as_view(), name='user-signup'),
     path('token/', views.CreateTokenView.as_view(), name='token'),
     path('me/', views.ManageUserView.as_view(), name='me'),
     path('upload-image/', views.UserImageUploadView.as_view(),

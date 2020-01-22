@@ -34,7 +34,11 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('email', 'password', 'username')
+        fields = (
+            'email', 'password', 'username',
+            'is_active', 'is_doctor'
+        )
+        read_only_fields = ('is_active', 'is_doctor')
 
     def create(self, validated_data):
         """Create a new user with encrypted password and return it."""
@@ -52,43 +56,41 @@ class ManageUserSerializer(serializers.ModelSerializer):
             'id', 'email',
             'username', 'created_date', 'profile'
         )
-        read_only_fields = ('id', 'created_date', )
+        read_only_fields = ('id', 'email', 'created_date', )
 
     def update(self, instance, validated_data):
         """Add or modify details of user"""
-        password = validated_data.pop('password', None)
-        profile_data = validated_data.pop('profile', None)
+        validated_data.pop('password', None)
+        user_profile_data = validated_data.pop('profile', None)
+        validated_data.pop('doctor_profile', None)
         profile = instance.profile
 
         user = super().update(instance, validated_data)
-
-        if password:
-            user.set_password(password)
-            user.save()
+        user.save()
 
         # Updating profile data is profile data is present
-        if profile_data:
-            profile.first_name = profile_data.get(
+        if user_profile_data:
+            profile.first_name = user_profile_data.get(
                 'first_name', profile.first_name)
-            profile.last_name = profile_data.get(
+            profile.last_name = user_profile_data.get(
                 'last_name', profile.last_name)
-            profile.phone = profile_data.get(
+            profile.phone = user_profile_data.get(
                 'phone', profile.phone)
-            profile.date_of_birth = profile_data.get(
+            profile.date_of_birth = user_profile_data.get(
                 'date_of_birth', profile.date_of_birth)
-            profile.city = profile_data.get(
+            profile.city = user_profile_data.get(
                 'city', profile.city)
-            profile.country = profile_data.get(
+            profile.country = user_profile_data.get(
                 'country', profile.country)
-            profile.postal_code = profile_data.get(
+            profile.postal_code = user_profile_data.get(
                 'postal_code', profile.postal_code)
-            profile.address = profile_data.get(
+            profile.address = user_profile_data.get(
                 'address', profile.address)
-            profile.primary_language = profile_data.get(
+            profile.primary_language = user_profile_data.get(
                 'primary_language', profile.primary_language)
-            profile.secondary_language = profile_data.get(
+            profile.secondary_language = user_profile_data.get(
                 'secondary_language', profile.secondary_language)
-            profile.tertiary_language = profile_data.get(
+            profile.tertiary_language = user_profile_data.get(
                 'tertiary_language', profile.tertiary_language)
 
             profile.save()
@@ -96,7 +98,7 @@ class ManageUserSerializer(serializers.ModelSerializer):
         return instance
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializerImageUpload(serializers.ModelSerializer):
     """Minimal serializer for supporting user image upload field"""
 
     class Meta:
@@ -104,9 +106,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('username', )
 
 
-class TempSerializer(serializers.ModelSerializer):
+class UserImageUploadSerializer(serializers.ModelSerializer):
     """Serializer for user image upload"""
-    user = UserSerializer(read_only=True)
+    user = UserSerializerImageUpload(read_only=True)
     image = serializers.ImageField(allow_null=True, use_url=True)
 
     class Meta:

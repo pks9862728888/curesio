@@ -12,12 +12,12 @@ from core.models import UserProfile, Languages
 
 
 # Creating urls for making various api calls
-CREATE_USER_URL = reverse("user:create")
+USER_SIGNUP_URL = reverse("user:user-signup")
 TOKEN_URL = reverse("user:token")
 ME_URL = reverse("user:me")
 
 
-def create_user_image_upload_url(user_id):
+def create_user_image_upload_url():
     """Creates url for uploading image for user"""
     return reverse('user:user-image-upload')
 
@@ -41,7 +41,7 @@ class PublicUserApiTests(TestCase):
             'username': 'testusername'
         }
 
-        res = self.client.post(CREATE_USER_URL, payload)
+        res = self.client.post(USER_SIGNUP_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         user = get_user_model().objects.get(email=res.data['email'])
@@ -58,7 +58,7 @@ class PublicUserApiTests(TestCase):
         }
         create_new_user(**payload)
 
-        res = self.client.post(CREATE_USER_URL, payload)
+        res = self.client.post(USER_SIGNUP_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -70,7 +70,7 @@ class PublicUserApiTests(TestCase):
             'username': 'testusername'
         }
 
-        res = self.client.post(CREATE_USER_URL, payload)
+        res = self.client.post(USER_SIGNUP_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         user_exists = get_user_model().objects.filter(**payload).exists()
@@ -137,7 +137,7 @@ class PublicUserApiTests(TestCase):
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_get_not_allowed_on_create_user_url(self):
+    def test_get_not_allowed_on_user_signup_url(self):
         """Test that retrieving profile details of others fails"""
         create_new_user(**{
             'email': 'temp@curesio.com',
@@ -145,7 +145,7 @@ class PublicUserApiTests(TestCase):
             'username': 'tempusername'
         })
 
-        res = self.client.get(CREATE_USER_URL)
+        res = self.client.get(USER_SIGNUP_URL)
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -175,7 +175,7 @@ class PrivateUserApiTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_get_not_allowed_on_create_user_url(self):
+    def test_get_not_allowed_on_USER_SIGNUP_URL(self):
         """Test that retrieving profile details of others fails"""
         create_new_user(**{
             'email': 'temp@curesio.com',
@@ -183,7 +183,7 @@ class PrivateUserApiTests(TestCase):
             'username': 'testuser12'
         })
 
-        res = self.client.get(CREATE_USER_URL)
+        res = self.client.get(USER_SIGNUP_URL)
 
         self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -251,25 +251,6 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res_profile['tertiary_language'],
                          None)
 
-    def test_cannot_update_details_of_another_user(self):
-        """Test that details of another user can not be changed"""
-        payload = {
-            'email': 'otheruseremail@gmail.com',
-            'password': 'testpassword1',
-            'username': 'oldusername'
-        }
-        create_new_user(**payload)
-
-        changed_payload = {
-            'email': 'otheruseremail@gmail.com',
-            'password': 'testpassword2',
-            'username': 'newusername'
-        }
-
-        res = self.client.patch(ME_URL, changed_payload)
-
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
 
 class UserImageUploadTests(TestCase):
     """Tests for uploading user profile picture"""
@@ -290,7 +271,7 @@ class UserImageUploadTests(TestCase):
 
     def test_user_profile_picture_upload(self):
         """Test that uploading profile picture is successful"""
-        image_upload_url = create_user_image_upload_url(self.user.pk)
+        image_upload_url = create_user_image_upload_url()
 
         with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
             img = Image.new('RGB', (10, 10))
@@ -307,7 +288,7 @@ class UserImageUploadTests(TestCase):
 
     def test_user_profile_picture_invalid_image_fails(self):
         """Test that invalid image upload fails"""
-        image_upload_url = create_user_image_upload_url(self.user.pk)
+        image_upload_url = create_user_image_upload_url()
 
         res = self.client.post(
             image_upload_url,

@@ -6,11 +6,11 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from core.models import Languages, UserProfile
+from core.models import Languages, UserProfile, Doctor
 from core import models
 
 
-class ModelTests(TestCase):
+class UserModelTests(TestCase):
 
     def test_create_user_model_with_email_successful(self):
         """Test whether creating new user with email is successful"""
@@ -150,3 +150,57 @@ class ModelTests(TestCase):
         expected_path = os.path.join(ini_path, f'{uuid}.jpg')
 
         self.assertEqual(file_path, expected_path)
+
+
+class DoctorTests(TestCase):
+    """Tests cases related to doctor model"""
+
+    def test_create_doctor_successful(self):
+        """
+        Test that creating doctor successful,
+        with minimal requirements.
+        """
+        email = 'doctor@gmail.com'
+        username = 'doctorname'
+        password = 'doctorname@curesio.com'
+        get_user_model().objects.create_doctor(
+            email=email,
+            username=username,
+            password=password
+        )
+        user = get_user_model().objects.get(email=email)
+
+        self.assertTrue(user.is_doctor)
+        self.assertFalse(user.is_active)
+        self.assertFalse(user.is_superuser)
+
+    def test_doctor_string_representation(self):
+        """Test string representation of doctor table"""
+        email = 'doctor@curesio.com'
+        doctor = get_user_model().objects.create_doctor(
+            email=email,
+            username='testdoctor',
+            password='testdoctorname@4'
+        )
+        doctor_profile = Doctor.objects.get(user=doctor)
+
+        self.assertEqual(str(doctor_profile), email)
+
+    def test_doctor_model(self):
+        """Test that doctor model creation is successful"""
+        email = 'doctor@gmail.com'
+        username = 'doctorname'
+        password = 'doctorname@curesio.com'
+        doctor = get_user_model().objects.create_doctor(
+            email=email,
+            username=username,
+            password=password
+        )
+        doctor.doctor_profile.experience = 5.0
+        doctor.save()
+
+        doctor_profile = Doctor.objects.get(user=doctor)
+
+        self.assertEqual(doctor_profile.experience, 5.0)
+        self.assertEqual(doctor_profile.qualification, '')
+        self.assertEqual(doctor_profile.highlights, '')
