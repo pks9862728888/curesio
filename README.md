@@ -174,15 +174,10 @@ Source code for our medical tourism website.
 
 - **Response codes:** 
      - **GET:** 200 OK
-     - **POST, DELETE, PATCH, PUT:**
->            - **By Unauthenticated user:** 401 UNAUTHORIZED
->            - **By Authenticated user:** 403 FORBIDDEN
-     - **POST:**
->            - **By Authenticated staff:** 201 CREATED
-     - **DELETE:**
->            - **By Authenticated staff:** 204 NO CONTENT
-     - **POST, PATCH**
->            - **In case of conflict:** 400 BAD REQUEST
+     - **POST, DELETE, PATCH, PUT:** **By Unauthenticated user:** 401 UNAUTHORIZED **By Authenticated user:** 403 FORBIDDEN
+     - **POST:** **By Authenticated staff:** 201 CREATED
+     - **DELETE:** **By Authenticated staff:** 204 NO CONTENT
+     - **POST, PATCH** **In case of conflict:** 400 BAD REQUEST
 
 - **Format of application/json:**
 
