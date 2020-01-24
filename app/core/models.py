@@ -213,16 +213,19 @@ class Procedure(models.Model):
     """Model to store procedure details"""
     name = models.CharField(_('Name'), max_length=50, unique=True)
     speciality = models.CharField(_('Speciality'), max_length=40)
-    days_in_hospital = models.IntegerField(_('Days in hospital'))
-    days_in_destination = models.IntegerField(_('Days in destination'))
-    duration_minutes = models.IntegerField(_('Duration in minutes'))
+    days_in_hospital = models.IntegerField(
+        _('Days in hospital'), blank=True, null=True)
+    days_in_destination = models.IntegerField(
+        _('Days in destination'), blank=True, null=True)
+    duration_minutes = models.IntegerField(
+        _('Duration in minutes'), blank=True, null=True)
     overview = models.TextField(_('Overview'), max_length=1000)
     other_details = models.TextField(
         _('Other details'), max_length=1000, blank=True
     )
 
     def save(self, *args, **kwargs):
-        """Overriting save method to save fields in lower case"""
+        """Overwriting save method to save fields in lower case"""
         self.name = self.name.lower()
         self.speciality = self.speciality.lower()
         super(Procedure, self).save(*args, **kwargs)

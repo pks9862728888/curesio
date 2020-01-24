@@ -36,9 +36,9 @@ class CreateUserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = (
             'email', 'password', 'username',
-            'is_active', 'is_doctor'
+            'is_active', 'is_doctor', 'is_staff'
         )
-        read_only_fields = ('is_active', 'is_doctor')
+        read_only_fields = ('is_active', 'is_doctor', 'is_staff')
 
     def create(self, validated_data):
         """Create a new user with encrypted password and return it."""
