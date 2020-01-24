@@ -1,5 +1,5 @@
 # curesio
-Source code for our medical tourism website
+Source code for our medical tourism website.
 
 # API Endpoints
 ## URLs
@@ -28,6 +28,14 @@ Source code for our medical tourism website
 3. **Doctor token authentication:** https://www.curesio.com/api/doctor/token/
 
 4. **Doctor image upload:** https://www.curesio.com/api/doctor/upload-image/
+
+
+*Related to staff*
+
+1. **Procedure add and list:** https://www.curesio.com/api/procedure/
+2. **Procedure edit, delete, and detail:** https://www.curesio.com/api/procedure/1/
+
+> **GET** request can be done by any user, but **PUT, PATCH, POST, DELETE** can be done by authenticated staff only.
 
 ## Fields and allowed methods for API URLs:
 
@@ -153,3 +161,70 @@ Source code for our medical tourism website
     ]
 }
 ```
+
+### Procedure add URL
+
+- **Methods:** GET, POST
+
+- **Required fields:** 'name', 'speciality', 'overview'
+
+- **Optional fields:** 'image', 'days_in_hospital', 'days_in_destination', 'duration_minutes', 'other_details'
+
+- **Read only fields:** 'id'
+
+- **Response codes:** 
+     - **GET:** 200 OK
+     - **POST, DELETE, PATCH, PUT:**
+             - **By Unauthenticated user:** 401 UNAUTHORIZED
+             - **By Authenticated user:** 403 FORBIDDEN
+     - **POST:**
+             - **By Authenticated staff:** 201 CREATED
+     - **DELETE:**
+             - **By Authenticated staff:** 204 NO CONTENT
+     - **POST, PATCH**
+             - **IN CASE OF CONFLICT:** 400 BAD REQUEST
+
+- **Format of application/json:**
+
+```
+{
+    "name": "",
+    "speciality": "",
+    "image": null,
+    "days_in_hospital": null,
+    "days_in_destination": null,
+    "duration_minutes": null,
+    "overview": "",
+    "other_details": ""
+}
+```
+
+- **Validation Error format:**
+
+```
+{
+    "name": [
+        "This field may not be blank."
+    ],
+    "speciality": [
+        "This field may not be blank."
+    ],
+    "overview": [
+        "This field may not be blank."
+    ]
+}
+```
+
+In case of duplicate content conflict.
+
+```
+{
+    "name": [
+        "Procedure with this name already exists."
+    ]
+}
+```
+
+### Procedure add URL
+
+- **Methods:** GET, PUT, PACTCH, DELETE
