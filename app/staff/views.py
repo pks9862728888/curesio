@@ -37,5 +37,5 @@ class ProcedureViewSet(ModelViewSet):
             return super(ProcedureViewSet, self).create(request,
                                                         *args, **kwargs)
         except IntegrityError:
-            msg = {'name': _('Procedure with this name already exists.')}
+            msg = {'name': [_('Procedure with this name already exists.')]}
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)

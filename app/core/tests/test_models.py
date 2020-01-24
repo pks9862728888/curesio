@@ -248,3 +248,17 @@ class ProcedureTests(TestCase):
         self.assertEqual(procedure.overview, payload['overview'])
         self.assertEqual(procedure.other_details,
                          payload['other_details'])
+
+    @patch('uuid.uuid4')
+    def test_procedure_image_upload_url_uuid(self, mock_url):
+        """Test that procedure image is uploaded in correct location"""
+        uuid = 'test-uuid'
+        mock_url.return_value = uuid
+
+        file_path = models.procedure_image_upload_file_path(None, 'proc.jpg')
+
+        dt = datetime.date.today()
+        ini_path = f'pictures/uploads/procedure/{dt.year}/{dt.month}/{dt.day}'
+        expected_path = os.path.join(ini_path, f'{uuid}.jpg')
+
+        self.assertEqual(file_path, expected_path)

@@ -28,6 +28,17 @@ def user_image_upload_file_path(instance, filename):
     return full_path
 
 
+def procedure_image_upload_file_path(instance, filename):
+    """Generates file path for uploading user images in user profile"""
+    extension = filename.split('.')[-1]
+    file_name = f'{uuid.uuid4()}.{extension}'
+    dt = datetime.date.today()
+    ini_path = f'pictures/uploads/procedure/{dt.year}/{dt.month}/{dt.day}/'
+    full_path = os.path.join(ini_path, file_name)
+
+    return full_path
+
+
 # Languages available as options in language field
 class Languages:
     ENGLISH = 'EN'
@@ -222,6 +233,14 @@ class Procedure(models.Model):
     overview = models.TextField(_('Overview'), max_length=1000)
     other_details = models.TextField(
         _('Other details'), max_length=1000, blank=True
+    )
+    image = models.ImageField(
+        _('Image'),
+        upload_to=procedure_image_upload_file_path,
+        null=True,
+        blank=True,
+        max_length=1024,
+        validators=(validate_image_file_extension,)
     )
 
     def save(self, *args, **kwargs):

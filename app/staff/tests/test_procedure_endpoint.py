@@ -1,3 +1,6 @@
+import tempfile
+from PIL import Image
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -247,8 +250,6 @@ class StaffAPITests(TestCase):
         res = self.client.post(PROCEDURE_URL, self.payload, format='json')
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(res.data['name'],
-                         'Procedure with this name already exists.')
 
     def test_staff_delete_procedure_success(self):
         """Test that deleting procedure by staff is success"""
@@ -299,3 +300,65 @@ class StaffAPITests(TestCase):
         response = self.client.patch(url, new_payload, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ProcedureImageUploadTests(TestCase):
+    """Tests for uploading procedure picture"""
+
+    def setUp(self):
+        """Setup for running all the tests"""
+        self.staff = get_user_model().objects.create_doctor(
+            email='temp@curesio.com',
+            password='testpass@4',
+            username='tempuser4'
+        )
+        self.staff.is_staff = True
+        self.staff.save()
+        self.staff.refresh_from_db()
+
+        self.client = APIClient()
+        self.client.force_authenticate(self.staff)
+
+    def test_procedure_picture_upload(self):
+        """Test that uploading procedure picture is successful"""
+        image_upload_url = PROCEDURE_URL
+
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as ntf:
+            img = Image.new('RGB', (10, 10))
+            img.save(ntf, format='JPEG')
+            ntf.seek(0)
+
+            payload = {
+                'name': 'temp',
+                'speciality': 'orthopedics',
+                'image': ntf,
+                'overview': 'bla bla bla'
+            }
+
+            res = self.client.post(
+                image_upload_url,
+                payload,
+                format="multipart"
+            )
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertIn('image', res.data)
+
+    def test_user_profile_picture_invalid_image_fails(self):
+        """Test that invalid image upload fails"""
+        image_upload_url = PROCEDURE_URL
+
+        payload = {
+            'name': 'temp',
+            'speciality': 'orthopedics',
+            'image': 'invalid image',
+            'overview': 'bla bla bla'
+        }
+
+        res = self.client.post(
+            image_upload_url,
+            payload,
+            format="multipart"
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
