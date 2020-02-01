@@ -145,8 +145,8 @@ class UserModelTests(TestCase):
 
         file_path = models.user_image_upload_file_path(None, 'myimage.jpg')
 
-        date = datetime.date.today()
-        ini_path = f'pictures/uploads/user/{date.year}/{date.month}/{date.day}'
+        dt = datetime.date.today()
+        ini_path = f'pictures/uploads/user/{dt.year}/{dt.month}/{dt.day}'
         expected_path = os.path.join(ini_path, f'{uuid}.jpg')
 
         self.assertEqual(file_path, expected_path)
@@ -154,6 +154,14 @@ class UserModelTests(TestCase):
 
 class DoctorTests(TestCase):
     """Tests cases related to doctor model"""
+
+    def setUp(self):
+        self.speciality1 = models.Speciality.objects.create(
+            name='Speciality1'
+        )
+        self.speciality2 = models.Speciality.objects.create(
+            name='Speciality2'
+        )
 
     def test_create_doctor_successful(self):
         """
@@ -197,13 +205,34 @@ class DoctorTests(TestCase):
             password=password
         )
         doctor.doctor_profile.experience = 5.0
+        doctor.doctor_profile.speciality1.set([self.speciality1])
+        doctor.doctor_profile.speciality2.set([self.speciality2])
         doctor.save()
 
         doctor_profile = Doctor.objects.get(user=doctor)
 
         self.assertEqual(doctor_profile.experience, 5.0)
         self.assertEqual(doctor_profile.qualification, '')
-        self.assertEqual(doctor_profile.highlights, '')
+        self.assertEqual(doctor_profile.speciality1.get(
+            pk=self.speciality1.pk), self.speciality1)
+        self.assertEqual(doctor_profile.speciality2.get(
+            pk=self.speciality2.pk), self.speciality2)
+        self.assertEqual(
+            str(doctor_profile.speciality3), 'core.Speciality.None')
+        self.assertEqual(
+            str(doctor_profile.speciality4), 'core.Speciality.None')
+
+
+class SpecialityTests(TestCase):
+    """Tests the speciality model"""
+
+    def test_speciality_success(self):
+        """Tests that speciality creation success"""
+        speciality = models.Speciality.objects.create(
+            name='temp'
+        )
+
+        self.assertEqual(speciality.name, 'temp')
 
 
 class ProcedureTests(TestCase):
@@ -213,7 +242,6 @@ class ProcedureTests(TestCase):
         """Test that adding procedure is success"""
         payload = {
             'name': "Knee Replacement",
-            'speciality': "Orthopedics",
             'days_in_hospital': 2,
             'days_in_destination': 2,
             'duration_minutes': 120,
@@ -221,15 +249,18 @@ class ProcedureTests(TestCase):
             'other_details': "none"
         }
 
-        models.Procedure.objects.create(
+        speciality = models.Speciality.objects.create(name='temp')
+
+        procedure_temp = models.Procedure.objects.create(
             name=payload['name'],
-            speciality=payload['speciality'],
             days_in_hospital=payload['days_in_hospital'],
             days_in_destination=payload['days_in_destination'],
             duration_minutes=payload['duration_minutes'],
             overview=payload['overview'],
             other_details=payload['other_details']
         )
+        procedure_temp.speciality.set([speciality])
+        procedure_temp.save()
 
         procedure = models.Procedure.objects.get(
             name=payload['name'].lower()
@@ -237,8 +268,8 @@ class ProcedureTests(TestCase):
 
         self.assertEqual(procedure.name,
                          payload['name'].lower())
-        self.assertEqual(procedure.speciality,
-                         payload['speciality'].lower())
+        self.assertEqual(procedure.speciality.get(pk=speciality.pk),
+                         speciality)
         self.assertEqual(procedure.days_in_hospital,
                          payload['days_in_hospital'])
         self.assertEqual(procedure.days_in_destination,
@@ -258,7 +289,229 @@ class ProcedureTests(TestCase):
         file_path = models.procedure_image_upload_file_path(None, 'proc.jpg')
 
         dt = datetime.date.today()
-        ini_path = f'pictures/uploads/procedure/{dt.year}/{dt.month}/{dt.day}'
-        expected_path = os.path.join(ini_path, f'{uuid}.jpg')
+        in_path = f'pictures/uploads/procedure/{dt.year}/{dt.month}/{dt.day}'
+        expected_path = os.path.join(in_path, f'{uuid}.jpg')
 
         self.assertEqual(file_path, expected_path)
+
+
+class HospitalModelTests(TestCase):
+    """Tests for Hospital model"""
+
+    def test_create_hospital_min_details_success(self):
+        """Test that creating hospital with minimum details is success."""
+        payload = {
+            'name': 'Test hospital',
+            'state': models.States_And_Union_Territories.TRIPURA,
+            'country': 'IN',
+            'street_name': 'xyz street'
+        }
+
+        models.Hospital.objects.create(
+            name=payload['name'],
+            state=payload['state'],
+            country=payload['country'],
+            street_name=payload['street_name'],
+        )
+
+        hospital = models.Hospital.objects.get(name=payload['name'])
+
+        self.assertEqual(hospital.name, payload['name'])
+        self.assertEqual(hospital.state, payload['state'])
+        self.assertEqual(hospital.country, payload['country'])
+
+    def test_create_hospital_full_details_success(self):
+        """Test that creating hospital is with_full_details_is_success."""
+        payload = {
+            'name': 'Test hospital',
+            'state': models.States_And_Union_Territories.TRIPURA,
+            'country': 'IN',
+            'postal_code': 799250,
+            'street_name': 'xyz street',
+            'overview': 'bla bla bla',
+            'location_details': 'bla bla bla',
+            'staff_details': 'bla bla bla',
+            'content_approver_name': 'Anup kumar dey'
+        }
+
+        models.Hospital.objects.create(
+            name=payload['name'],
+            state=payload['state'],
+            country=payload['country'],
+            postal_code=payload['postal_code'],
+            street_name=payload['street_name'],
+            overview=payload['overview'],
+            location_details=payload['location_details'],
+            staff_details=payload['staff_details'],
+            content_approver_name=payload['content_approver_name']
+        )
+
+        hospital = models.Hospital.objects.get(name=payload['name'])
+
+        self.assertEqual(hospital.name, payload['name'])
+        self.assertEqual(hospital.state, payload['state'])
+        self.assertEqual(hospital.country, payload['country'])
+
+    @patch('uuid.uuid4')
+    def test_hospital_image_upload_file_path_success(self, mock_url):
+        """Test that hospital image is uploaded in correct location"""
+        uuid = 'test-uuid'
+        mock_url.return_value = uuid
+
+        file_path = models.hospital_image_upload_file_path(None, 'img.png')
+
+        dt = datetime.date.today()
+        ini_path = f'pictures/uploads/hospital/{dt.year}/{dt.month}/{dt.day}'
+        expected_path = os.path.join(ini_path, f'{uuid}.png')
+
+        self.assertEqual(expected_path, file_path)
+
+
+class AccreditationModelTest(TestCase):
+    """Test accreditation model"""
+
+    def setUp(self):
+        self.hospital = models.Hospital.objects.create(
+            name='name',
+            state=models.States_And_Union_Territories.TRIPURA,
+            country='IN',
+            street_name='street name'
+        )
+
+    def test_accreditation_model_creation_success(self):
+        """Test that accreditation model creation is success"""
+
+        accreditation = models.Accreditation.objects.create(
+            hospital=self.hospital,
+            name='bla bla bla'
+        )
+
+        self.assertEqual(accreditation.name, 'bla bla bla')
+
+    @patch('uuid.uuid4')
+    def test_accreditation_image_upload_file_path_success(self, mock_url):
+        """Test that accreditation image is uploaded in correct location"""
+        uuid = 'test-uuid'
+        mock_url.return_value = uuid
+
+        file_path = models.hospital_accreditation_image_upload_file_path(
+            None, 'myimage.png')
+
+        dt = datetime.date.today()
+        ini_path = f'pictures/uploads/hospital/accreditation/'
+        ini_path = ini_path + f'{dt.year}/{dt.month}/{dt.day}'
+        expected_path = os.path.join(ini_path, f'{uuid}.png')
+
+        self.assertEqual(expected_path, file_path)
+
+
+class ServiceModelTest(TestCase):
+    """Tests for service model"""
+
+    def setUp(self):
+        self.hospital = models.Hospital.objects.create(
+            name='name',
+            state=models.States_And_Union_Territories.TRIPURA,
+            country='IN',
+            street_name='street name'
+        )
+
+    def test_service_creation_success(self):
+        """Test that service creation is success for hospitals"""
+        service = models.Service.objects.create(
+            hospital=self.hospital,
+            name='test bla bla'
+        )
+
+        self.assertEqual(service.name, 'test bla bla')
+
+
+class HospitalLanguageModelTest(TestCase):
+    """Tests for hospital language model"""
+
+    def setUp(self):
+        self.hospital = models.Hospital.objects.create(
+            name='name',
+            state=models.States_And_Union_Territories.TRIPURA,
+            country='IN',
+            street_name='street name'
+        )
+
+    def test_hospital_language_model(self):
+        """Test hospital language add success"""
+        hospital_language = models.HospitalLanguage.objects.create(
+            hospital=self.hospital,
+            language=Languages.ENGLISH
+        )
+
+        self.assertEqual(hospital_language.language, Languages.ENGLISH)
+
+
+class HospitalProcedureModelTest(TestCase):
+    """Tests for hospital procedure model"""
+
+    def setUp(self):
+        self.hospital = models.Hospital.objects.create(
+            name='name',
+            state=models.States_And_Union_Territories.TRIPURA,
+            country='IN',
+            street_name='street name'
+        )
+
+        self.speciality = models.Speciality.objects.create(
+            name='Tempname'
+        )
+
+        self.procedure = models.Procedure.objects.create(
+            name="Knee Replacement",
+            days_in_hospital=2,
+            days_in_destination=2,
+            duration_minutes=123,
+            overview='<strong>Bla</strong> bla bla',
+            other_details="none"
+        )
+        self.procedure.speciality.set([self.speciality])
+        self.procedure.save()
+        self.procedure.refresh_from_db()
+
+    def test_hospital_procedure_model_success(self):
+        """Test hospital procedure add success"""
+        hospital_pro = models.HospitalProcedure.objects.create(
+            hospital=self.hospital,
+        )
+        hospital_pro.procedure.set([self.procedure])
+        hospital_pro.save()
+        hospital_pro.refresh_from_db()
+
+        self.assertEqual(hospital_pro.procedure.get(
+            pk=self.procedure.pk), self.procedure
+        )
+
+
+class HospitalDoctorModelTest(TestCase):
+    """Tests for hospital doctor model"""
+
+    def setUp(self):
+        self.hospital = models.Hospital.objects.create(
+            name='name',
+            state=models.States_And_Union_Territories.TRIPURA,
+            country='IN',
+            street_name='street name'
+        )
+        self.doctor = get_user_model().objects.create_doctor(
+            email='test@gmail.com',
+            username='testuser',
+            password='testpassword@4'
+        )
+
+    def test_hospital_doctor_creation_success(self):
+        """Test that hospital doctor creation success"""
+        hospital_doc = models.HospitalDoctor.objects.create(
+            hospital=self.hospital
+        )
+        hospital_doc.doctor.set([self.doctor])
+
+        self.assertEqual(hospital_doc.hospital, self.hospital)
+        self.assertEqual(hospital_doc.doctor.get(
+            pk=self.doctor.pk), self.doctor
+        )

@@ -8,7 +8,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import UserProfile, Languages
+from core.models import UserProfile, Languages, Speciality
 
 # Creating urls for making various api calls
 DOCTOR_SIGNUP_URL = reverse("doctor:doctor-signup")
@@ -36,6 +36,8 @@ class PublicUserApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
+        self.speciality = Speciality.objects.create(name='lol')
+
     def test_create_valid_doctor_success(self):
         """Test that creating doctor with valid credential success"""
         payload = {
@@ -51,15 +53,19 @@ class PublicUserApiTests(TestCase):
             },
             'doctor_profile': {
                 'qualification': 'MBBS',
+                'speciality1': [self.speciality.pk]
             }
         }
 
         res = self.client.post(DOCTOR_SIGNUP_URL, payload, format='json')
+
         profile_data = dict(res.data['profile'])
+        doc_profile = dict(res.data['doctor_profile'])
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data['email'], payload['email'])
         self.assertEqual(res.data['username'], payload['username'])
+
         self.assertEqual(profile_data['first_name'],
                          payload['profile']['first_name'])
         self.assertEqual(profile_data['last_name'],
@@ -70,10 +76,18 @@ class PublicUserApiTests(TestCase):
                          payload['profile']['country'])
         self.assertEqual(profile_data['primary_language'],
                          payload['profile']['primary_language'])
+
+        self.assertEqual(doc_profile['qualification'],
+                         payload['doctor_profile']['qualification'])
+        self.assertEqual(doc_profile['speciality1'],
+                         payload['doctor_profile']['speciality1'])
+        self.assertEqual(doc_profile['speciality2'], [])
+
         doctor = get_user_model().objects.get(email=res.data['email'])
-        self.assertEqual(doctor.username, payload['username'])
+
         self.assertTrue(doctor.check_password(payload['password']))
         self.assertNotIn('password', res.data)
+
         self.assertTrue(doctor.is_doctor)
         self.assertFalse(doctor.is_active)
         self.assertFalse(doctor.is_staff)
@@ -94,7 +108,11 @@ class PublicUserApiTests(TestCase):
             'doctor_profile': {
                 'qualification': 'MBBS',
                 'experience': 3.0,
-                'highlights': 'test'
+                'highlights': 'test',
+                'speciality1': [self.speciality.pk],
+                'speciality2': [self.speciality.pk],
+                'speciality3': [self.speciality.pk],
+                'speciality4': [self.speciality.pk]
             }
         }
 
@@ -116,6 +134,14 @@ class PublicUserApiTests(TestCase):
                          str(payload['doctor_profile']['experience']))
         self.assertEqual(doc_profile_data['highlights'],
                          payload['doctor_profile']['highlights'])
+        self.assertEqual(doc_profile_data['speciality1'],
+                         payload['doctor_profile']['speciality1'])
+        self.assertEqual(doc_profile_data['speciality2'],
+                         payload['doctor_profile']['speciality2'])
+        self.assertEqual(doc_profile_data['speciality3'],
+                         payload['doctor_profile']['speciality3'])
+        self.assertEqual(doc_profile_data['speciality4'],
+                         payload['doctor_profile']['speciality4'])
 
     def test_doctor_exists_fails(self):
         """Test that creating new doctor which already exists fails"""
@@ -297,6 +323,10 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(res_doc_profile['qualification'], '')
         self.assertEqual(res_doc_profile['experience'], None),
         self.assertEqual(res_doc_profile['highlights'], '')
+        self.assertEqual(res_doc_profile['speciality1'], [])
+        self.assertEqual(res_doc_profile['speciality2'], [])
+        self.assertEqual(res_doc_profile['speciality3'], [])
+        self.assertEqual(res_doc_profile['speciality4'], [])
 
     def test_post_me_not_allowed(self):
         """Test that post is not allowed on me url"""
@@ -450,6 +480,10 @@ class PrivateDotorAPITests(TestCase):
         self.assertEqual(res_doctor_profile['qualification'], '')
         self.assertEqual(res_doctor_profile['highlights'], '')
         self.assertEqual(res_doctor_profile['experience'], None)
+        self.assertEqual(res_doctor_profile['speciality1'], [])
+        self.assertEqual(res_doctor_profile['speciality2'], [])
+        self.assertEqual(res_doctor_profile['speciality3'], [])
+        self.assertEqual(res_doctor_profile['speciality4'], [])
 
     def test_partial_update_doctor_profile(self):
         """Test updating the doctor for authenticated doctor"""
@@ -498,6 +532,7 @@ class PrivateDotorAPITests(TestCase):
                          payload['doctor_profile']['qualification'])
         self.assertEqual(res_doctor_profile['highlights'],
                          payload['doctor_profile']['highlights'])
+        self.assertEqual(res_doctor_profile['speciality1'], [])
 
 
 class DoctorUserImageUploadTests(TestCase):

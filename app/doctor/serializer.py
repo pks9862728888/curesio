@@ -6,7 +6,7 @@ from rest_framework import serializers
 from django_countries.serializer_fields import CountryField
 from django_countries.serializers import CountryFieldMixin
 
-from core.models import UserProfile, Doctor, Languages
+from core.models import UserProfile, Doctor, Languages, Speciality
 
 
 class ProfileSerializer(CountryFieldMixin, serializers.ModelSerializer):
@@ -33,12 +33,43 @@ class ProfileSerializer(CountryFieldMixin, serializers.ModelSerializer):
         }
 
 
+class SpecialitySerializer(serializers.ModelSerializer):
+    """Serializer for speciality model"""
+
+    class Meta:
+        model = Speciality
+        fields = ('id', 'name')
+        read_only_fields = ('id', )
+
+
 class DoctorProfileSerializer(serializers.ModelSerializer):
     """Serializer for doctor model"""
+    speciality1 = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Speciality.objects.all(),
+        required=False
+    )
+    speciality2 = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Speciality.objects.all(),
+        required=False
+    )
+    speciality3 = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Speciality.objects.all(),
+        required=False
+    )
+    speciality4 = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Speciality.objects.all(),
+        required=False
+    )
 
     class Meta:
         model = Doctor
-        fields = ('experience', 'qualification', 'highlights')
+        fields = ('experience', 'qualification', 'highlights',
+                  'speciality1', 'speciality2', 'speciality3',
+                  'speciality4')
 
 
 class CreateDoctorSerializer(serializers.ModelSerializer):
@@ -50,7 +81,7 @@ class CreateDoctorSerializer(serializers.ModelSerializer):
         min_length=8
     )
     profile = ProfileSerializer(required=True)
-    doctor_profile = DoctorProfileSerializer()
+    doctor_profile = DoctorProfileSerializer(required=False)
 
     class Meta:
         model = get_user_model()
@@ -96,23 +127,39 @@ class CreateDoctorSerializer(serializers.ModelSerializer):
 
             profile.save()
 
-        # Check preventign user from uploading doctor details
-        try:
-            # Saving doctor profile data if present
-            if doc_profile_data:
-                doc_pro = Doctor.objects.get(user=doctor)
-                doc_pro.qualification = doc_profile_data.get(
-                    'qualification', doc_pro.qualification
-                )
-                doc_pro.experience = doc_profile_data.get(
-                    'experience', doc_pro.experience
-                )
-                doc_pro.highlights = doc_profile_data.get(
-                    'highlights', doc_pro.highlights
-                )
-                doc_pro.save()
-        except:
-            pass
+        # Check to prevent user from uploading doctor details
+        # Saving doctor profile data if present
+        if doc_profile_data:
+            doc_pro = Doctor.objects.get(user=doctor)
+            doc_pro.qualification = doc_profile_data.get(
+                'qualification', doc_pro.qualification
+            )
+            doc_pro.experience = doc_profile_data.get(
+                'experience', doc_pro.experience
+            )
+            doc_pro.highlights = doc_profile_data.get(
+                'highlights', doc_pro.highlights
+            )
+            doc_pro.save()
+
+            # Saving many to many field data if present
+            if doc_profile_data.get('speciality1', None):
+                doc_pro.speciality1.set(doc_profile_data.get(
+                    'speciality1'))
+
+            if doc_profile_data.get('speciality2', None):
+                doc_pro.speciality2.set(doc_profile_data.get(
+                    'speciality2'))
+
+            if doc_profile_data.get('speciality3', None):
+                doc_pro.speciality3.set(doc_profile_data.get(
+                    'speciality3'))
+
+            if doc_profile_data.get('speciality4', None):
+                doc_pro.speciality4.set(doc_profile_data.get(
+                    'speciality4'))
+
+            doc_pro.save()
 
         # Refreshing the object with latest saved data
         doctor.refresh_from_db()
@@ -182,6 +229,23 @@ class ManageDoctorUserSerializer(serializers.ModelSerializer):
             doc_profile.highlights = doctor_profile_data.get(
                 'highlights', doc_profile.highlights
             )
+
+            # Saving many to many field data if present
+            if doctor_profile_data.get('speciality1', None):
+                doc_profile.speciality1.set(doctor_profile_data.get(
+                    'speciality1'))
+
+            if doctor_profile_data.get('speciality2', None):
+                doc_profile.speciality2.set(doctor_profile_data.get(
+                    'speciality2'))
+
+            if doctor_profile_data.get('speciality3', None):
+                doc_profile.speciality3.set(doctor_profile_data.get(
+                    'speciality3'))
+
+            if doctor_profile_data.get('speciality4', None):
+                doc_profile.speciality4.set(doctor_profile_data.get(
+                    'speciality4'))
 
             doc_profile.save()
 

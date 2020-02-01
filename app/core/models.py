@@ -12,9 +12,106 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 
 from phonenumber_field.modelfields import PhoneNumberField
+from django_countries import Countries
 from django_countries.fields import CountryField
 
 from rest_framework.authtoken.models import Token
+
+
+class OperationalCountries(Countries):
+    """Overriding countries to include only operational countries."""
+    only = ['IN', ]
+
+
+# Languages available as options in language field
+class Languages:
+    ENGLISH = 'EN'
+    BENGALI = 'BN'
+    HINDI = 'HI'
+    LANGUAGE_IN_LANGUAGE_CHOICES = [
+        (ENGLISH, _(u'English')),
+        (BENGALI, _(u'Bengali')),
+        (HINDI, _(u'Hindi'))
+    ]
+
+
+# States available as options in state field
+class States_And_Union_Territories:
+    ANDAMAN_AND_NICOBAR_ISLANDS = 'AN'
+    ANDHRA_PRADESH = 'AP'
+    ARUNACHAL_PRADESH = 'AR'
+    ASSAM = 'AS'
+    BIHAR = 'BR'
+    CHANDIGARH = 'CH'
+    CHHATTISGARH = 'CT'
+    DADRA_AND_NAGAR_HAVELI = 'DN'
+    DAMAN_AND_DIU = 'DD'
+    DELHI = 'DL'
+    GOA = 'GA'
+    GUJARAT = 'GJ'
+    HARYANA = 'HR'
+    HIMACHAL_PRADESH = 'HP'
+    JAMMU_AND_KASHMIR = 'JK'
+    JHARKHAND = 'JH'
+    KARNATAKA = 'KA'
+    KERALA = 'KL'
+    LAKSHADWEEP = 'LD'
+    MADHYA_PRADESH = 'MP'
+    MAHARASHTRA = 'MH'
+    MANIPUR = 'MP'
+    MEGHALAYA = 'ML'
+    MIZORAM = 'MZ'
+    NAGALAND = 'NL'
+    ODISHA = 'OR'
+    PONDICHERRY = 'PD'
+    PUNJAB = 'PB'
+    RAJASHTAN = 'RJ'
+    SIKKIM = 'SK'
+    TAMIL_NADU = 'TN'
+    TELANGANA = 'TG'
+    TRIPURA = 'TR'
+    UTTAR_PRADESH = 'UP'
+    UTTARAKHAND = 'UK'
+    WEST_BENGAL = 'WB'
+
+    STATE_IN_STATE_CHOICES = [
+        (ANDAMAN_AND_NICOBAR_ISLANDS,
+         _(u'Andaman and Nicobar Islands')),
+        (ANDHRA_PRADESH, _(u'Andhra Pradesh')),
+        (ARUNACHAL_PRADESH, _(u'Arunachal Pradesh')),
+        (ASSAM, _(u'Assam')),
+        (BIHAR, _(u'Bihar')),
+        (CHANDIGARH, _(u'Chandigarh')),
+        (CHHATTISGARH, _(u'Chhattishgarh')),
+        (DADRA_AND_NAGAR_HAVELI, _(u'Dadra and Nagar Haveli')),
+        (DAMAN_AND_DIU, _(u'Daman and Diu')),
+        (GOA, _(u'Goa')),
+        (GUJARAT, _(u'Gujarat')),
+        (HARYANA, _(u'Haryana')),
+        (HIMACHAL_PRADESH, _(u'Himachal Pradesh')),
+        (JAMMU_AND_KASHMIR, _(u'Jammu and Kashmir')),
+        (JHARKHAND, _(u'Jharkhand')),
+        (KARNATAKA, _(u'Karnataka')),
+        (KERALA, _(u'Kerala')),
+        (LAKSHADWEEP, _(u'Lakshadweep')),
+        (MADHYA_PRADESH, _(u'Madhya Pradesh')),
+        (MAHARASHTRA, _(u'Maharashtra')),
+        (MANIPUR, _(u'Manipur')),
+        (MEGHALAYA, _(u'Meghalaya')),
+        (MIZORAM, _(u'Mizoram')),
+        (NAGALAND, _(u'Nagaland')),
+        (ODISHA, _(u'Odisha')),
+        (PONDICHERRY, _(u'Pondicherry')),
+        (PUNJAB, _(u'Punjab')),
+        (RAJASHTAN, _(u'Rajasthan')),
+        (SIKKIM, _(u'Sikkim')),
+        (TAMIL_NADU, _(u'Tamil Nadu')),
+        (TELANGANA, _(u'Telangana')),
+        (TRIPURA, _(u'Tripura')),
+        (UTTAR_PRADESH, _(u'Uttar Pradesh')),
+        (UTTARAKHAND, _(u'Uttarakhand')),
+        (WEST_BENGAL, _(u'West Bengal')),
+    ]
 
 
 def user_image_upload_file_path(instance, filename):
@@ -39,16 +136,27 @@ def procedure_image_upload_file_path(instance, filename):
     return full_path
 
 
-# Languages available as options in language field
-class Languages:
-    ENGLISH = 'EN'
-    BENGALI = 'BN'
-    HINDI = 'HI'
-    LANGUAGE_IN_LANGUAGE_CHOICES = [
-        (ENGLISH, _(u'English')),
-        (BENGALI, _(u'Bengali')),
-        (HINDI, _(u'Hindi'))
-    ]
+def hospital_image_upload_file_path(instance, filename):
+    """Generates file path for uploading hospital images"""
+    extension = filename.split('.')[-1]
+    file_name = f'{uuid.uuid4()}.{extension}'
+    dt = datetime.date.today()
+    ini_path = f'pictures/uploads/hospital/{dt.year}/{dt.month}/{dt.day}/'
+    full_path = os.path.join(ini_path, file_name)
+
+    return full_path
+
+
+def hospital_accreditation_image_upload_file_path(instance, filename):
+    """Generates file path for uploading hospital accreditation images"""
+    extension = filename.split('.')[-1]
+    file_name = f'{uuid.uuid4()}.{extension}'
+    dt = datetime.date.today()
+    ini_path = f'pictures/uploads/hospital/accreditation/'
+    ini_path = ini_path + f'{dt.year}/{dt.month}/{dt.day}/'
+    full_path = os.path.join(ini_path, file_name)
+
+    return full_path
 
 
 class UserManager(BaseUserManager):
@@ -183,6 +291,22 @@ class UserProfile(models.Model, Languages):
         return str(self.user)
 
 
+class Speciality(models.Model):
+    """Creates model to store specialities"""
+    name = models.CharField(_('Name'), max_length=30, unique=True)
+
+    class Meta:
+        verbose_name_plural = 'Specialities'
+
+    def __str__(self):
+        return self.name.capitalize()
+
+    def save(self, *args, **kwargs):
+        """Overwriting save method to save fields in lower case"""
+        self.name = self.name.lower()
+        super(Speciality, self).save(*args, **kwargs)
+
+
 class Doctor(models.Model):
     """Creates model to store details specific to doctor"""
     user = models.OneToOneField(
@@ -198,6 +322,14 @@ class Doctor(models.Model):
         _('Qualification'), max_length=1024, blank=True, default='')
     highlights = models.TextField(
         _('Highlights'), max_length=1024, blank=True, default='')
+    speciality1 = models.ManyToManyField(
+        to='Speciality', blank=True, related_name='speciality1')
+    speciality2 = models.ManyToManyField(
+        to='Speciality', blank=True, related_name='speciality2')
+    speciality3 = models.ManyToManyField(
+        to='Speciality', blank=True, related_name='speciality3')
+    speciality4 = models.ManyToManyField(
+        to='Speciality', blank=True, related_name='speciality4')
 
     def __str__(self):
         return str(self.user)
@@ -223,7 +355,11 @@ def user_is_created(sender, instance, created, **kwargs):
 class Procedure(models.Model):
     """Model to store procedure details"""
     name = models.CharField(_('Name'), max_length=50, unique=True)
-    speciality = models.CharField(_('Speciality'), max_length=40)
+    speciality = models.ManyToManyField(
+        to='Speciality',
+        blank=True,
+        related_name='speciality'
+    )
     days_in_hospital = models.IntegerField(
         _('Days in hospital'), blank=True, null=True)
     days_in_destination = models.IntegerField(
@@ -246,9 +382,224 @@ class Procedure(models.Model):
     def save(self, *args, **kwargs):
         """Overwriting save method to save fields in lower case"""
         self.name = self.name.lower()
-        self.speciality = self.speciality.lower()
         super(Procedure, self).save(*args, **kwargs)
 
     def __str__(self):
         """Returns string representation of the model"""
         return self.name.capitalize()
+
+
+class Hospital(models.Model):
+    """Model to store hospital details."""
+    name = models.CharField(_('Name'), max_length=100)
+    state = models.CharField(
+        _('State'),
+        max_length=2,
+        choices=States_And_Union_Territories.STATE_IN_STATE_CHOICES
+    )
+    country = CountryField(
+        _('Country'), countries=OperationalCountries, default='IN')
+    postal_code = models.CharField(
+        _('ZIP / Postal Code'), max_length=12, default='', blank=True)
+    street_name = models.CharField(_('Street Name'), max_length=40)
+    location_details = models.TextField(
+        _('Location details'), max_length=300, blank=True)
+    overview = models.TextField(
+        _('overview'), max_length=3000, blank=True)
+    staff_details = models.TextField(
+        _('Staff Details'), max_length=500, blank=True)
+    content_approver_name = models.CharField(
+        _('Content Approver Name'), max_length=100, blank=True)
+    image1 = models.ImageField(
+        _('Image1'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image2 = models.ImageField(
+        _('Image2'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image3 = models.ImageField(
+        _('Image3'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image4 = models.ImageField(
+        _('Image4'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image5 = models.ImageField(
+        _('Image5'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image6 = models.ImageField(
+        _('Image6'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image7 = models.ImageField(
+        _('Image7'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image8 = models.ImageField(
+        _('Image8'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image9 = models.ImageField(
+        _('Image9'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image10 = models.ImageField(
+        _('Image10'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image11 = models.ImageField(
+        _('Image11'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+    image12 = models.ImageField(
+        _('Image12'),
+        upload_to=hospital_image_upload_file_path,
+        blank=True,
+        null=True,
+        max_length=1024,
+        validators=(validate_image_file_extension, )
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Accreditation(models.Model):
+    """Model for hospital accreditation"""
+    hospital = models.ForeignKey(
+        to='Hospital',
+        on_delete=models.CASCADE,
+        related_name='accreditation'
+    )
+    name = models.CharField(
+        _('Name'), max_length=30)
+    image = models.ImageField(
+        _('Accreditation image'),
+        max_length=1024,
+        upload_to=hospital_accreditation_image_upload_file_path,
+        blank=True,
+        null=True,
+        validators=(validate_image_file_extension, )
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Service(models.Model):
+    """Model for hospital services"""
+    hospital = models.ForeignKey(
+        to='Hospital',
+        on_delete=models.CASCADE,
+        related_name='service'
+    )
+    name = models.CharField(
+        _('Name'), max_length=30)
+
+    def __str__(self):
+        return self.name
+
+
+class HospitalLanguage(models.Model):
+    """Model for hospital languages"""
+    hospital = models.ForeignKey(
+        to='Hospital',
+        on_delete=models.CASCADE,
+        related_name='hospital_language'
+    )
+    language = models.CharField(
+        _('Language'),
+        choices=Languages.LANGUAGE_IN_LANGUAGE_CHOICES,
+        max_length=3
+    )
+
+    def __str__(self):
+        return self.language
+
+
+class HospitalProcedure(models.Model):
+    """Model for hospital procedure"""
+    hospital = models.ForeignKey(
+        to='Hospital',
+        on_delete=models.CASCADE,
+        related_name='hospital_procedure'
+    )
+    procedure = models.ManyToManyField(to='Procedure')
+
+    def __str__(self):
+        return ', '.join([p.name for p in self.procedure.all()])
+
+
+class HospitalDoctor(models.Model):
+    """Model for hospital doctor"""
+    hospital = models.ForeignKey(
+        to='Hospital',
+        on_delete=models.CASCADE,
+        related_name='hospital_doctor'
+    )
+    doctor = models.ManyToManyField(to='User')
+
+    def __str__(self):
+        string_rep = ''
+        for doc in self.doctor.all():
+            profile = UserProfile.objects.get(user=doc)
+            if profile.first_name:
+                if string_rep:
+                    string_rep = string_rep + ', ' + \
+                                profile.first_name + ' ' + profile.last_name
+                else:
+                    string_rep = profile.first_name + ' ' + profile.last_name
+            else:
+                if string_rep:
+                    string_rep = string_rep + ', ' + doc.email
+                else:
+                    string_rep = doc.email
+
+        return string_rep

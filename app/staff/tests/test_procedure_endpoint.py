@@ -35,9 +35,13 @@ class PublicUserAPITests(TestCase):
         """Setup code for running public tests"""
         self.client = APIClient()
 
+        self.speciality = models.Speciality.objects.create(
+            name='Speciality'
+        )
+
         self.payload = {
             'name': "Knee Replacement",
-            'speciality': "Orthopedics",
+            'speciality': [self.speciality.pk],
             'days_in_hospital': 2,
             'days_in_destination': 2,
             'duration_minutes': 120,
@@ -46,16 +50,19 @@ class PublicUserAPITests(TestCase):
 
     def test_list_procedure_success_unauthenticated_user(self):
         """Test that list procedure is success"""
-        models.Procedure.objects.create(
+        p1 = models.Procedure.objects.create(
             name="procedure1",
-            speciality='Orthopedics',
             overview='bla bla bla'
         )
-        models.Procedure.objects.create(
+        p1.speciality.set([self.speciality.pk])
+        p1.save()
+
+        p2 = models.Procedure.objects.create(
             name="procedure2",
-            speciality='Orthopedics',
             overview='bla bla bla'
         )
+        p2.speciality.set([self.speciality.pk])
+        p2.save()
 
         res = self.client.get(PROCEDURE_URL)
 
@@ -75,11 +82,12 @@ class PublicUserAPITests(TestCase):
 
     def test_user_delete_procedure_failure(self):
         """Test that deleting procedure by unauthenticated user fails"""
-        models.Procedure.objects.create(
+        p1 = models.Procedure.objects.create(
             name='temp',
-            speciality='tempspecila',
             overview='bla bla bla'
         )
+        p1.speciality.set([self.speciality.pk])
+        p1.save()
 
         res = self.client.get(PROCEDURE_URL)
 
@@ -104,18 +112,25 @@ class PrivateUserAPITests(TestCase):
             'overview': 'bla bla bla'
         }
 
+        self.speciality = models.Speciality.objects.create(
+            name='Speciality'
+        )
+
     def test_list_procedure_success_authenticated_user(self):
         """Test that list procedure is success"""
-        models.Procedure.objects.create(
+        p1 = models.Procedure.objects.create(
             name="procedure1",
-            speciality='Orthopedics',
             overview='bla bla bla'
         )
-        models.Procedure.objects.create(
+        p1.speciality.set([self.speciality.pk])
+        p1.save()
+
+        p2 = models.Procedure.objects.create(
             name="procedure2",
-            speciality='Orthopedics',
             overview='bla bla bla'
         )
+        p2.speciality.set([self.speciality.pk])
+        p2.save()
 
         res = self.client.get(PROCEDURE_URL)
 
@@ -135,11 +150,12 @@ class PrivateUserAPITests(TestCase):
 
     def test_user_delete_procedure_failure(self):
         """Test that deleting procedure by user fails"""
-        models.Procedure.objects.create(
+        p1 = models.Procedure.objects.create(
             name='temp',
-            speciality='tempspecila',
             overview='bla bla bla'
         )
+        p1.speciality.set([self.speciality.pk])
+        p1.save()
 
         res = self.client.get(PROCEDURE_URL)
 
@@ -151,11 +167,12 @@ class PrivateUserAPITests(TestCase):
 
     def test_user_update_procedure_failure(self):
         """Test that updating procedure by user fails"""
-        models.Procedure.objects.create(
+        p1 = models.Procedure.objects.create(
             name='temp',
-            speciality='tempspecila',
             overview='bla bla bla'
         )
+        p1.speciality.set([self.speciality.pk])
+        p1.save()
 
         res = self.client.get(PROCEDURE_URL)
 
@@ -186,24 +203,30 @@ class StaffAPITests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.staff)
 
+        self.speciality = models.Speciality.objects.create(
+            name='Speciality'
+        )
+
         self.payload = {
             'name': "Knee Replacement",
-            'speciality': "Orthopedics",
+            'speciality': [self.speciality.id],
             'overview': '<strong>Bla</strong> bla bla',
         }
 
-    def test_list_procedure_success_for_staff(self):
         """Test that list procedure is success"""
-        models.Procedure.objects.create(
+        p1 = models.Procedure.objects.create(
             name="procedure1",
-            speciality='Orthopedics',
             overview='bla bla bla'
         )
-        models.Procedure.objects.create(
+        p1.speciality.set([self.speciality.pk])
+        p1.save()
+
+        p2 = models.Procedure.objects.create(
             name="procedure2",
-            speciality='Orthopedics',
             overview='bla bla bla'
         )
+        p2.speciality.set([self.speciality.pk])
+        p2.save()
 
         res = self.client.get(PROCEDURE_URL)
 
@@ -228,7 +251,7 @@ class StaffAPITests(TestCase):
         self.assertEqual(res.data['name'],
                          self.payload['name'].lower())
         self.assertEqual(res.data['speciality'],
-                         self.payload['speciality'].lower())
+                         self.payload['speciality'])
         self.assertEqual(res.data['days_in_hospital'], None)
         self.assertEqual(res.data['days_in_destination'], None)
         self.assertEqual(res.data['duration_minutes'], None)
@@ -287,7 +310,7 @@ class StaffAPITests(TestCase):
         res = self.client.post(PROCEDURE_URL, self.payload, format='json')
         second_payload = {
             'name': 'abc',
-            'speciality': 'orthopedics',
+            'speciality': [self.speciality.id],
             'overview': 'bla bla bla'
         }
         self.client.post(PROCEDURE_URL, second_payload, format='json')
@@ -319,6 +342,10 @@ class ProcedureImageUploadTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(self.staff)
 
+        self.speciality = models.Speciality.objects.create(
+            name='Speciality1'
+        )
+
     def test_procedure_picture_upload(self):
         """Test that uploading procedure picture is successful"""
         image_upload_url = PROCEDURE_URL
@@ -330,7 +357,7 @@ class ProcedureImageUploadTests(TestCase):
 
             payload = {
                 'name': 'temp',
-                'speciality': 'orthopedics',
+                'speciality': [self.speciality.pk],
                 'image': ntf,
                 'overview': 'bla bla bla'
             }
@@ -350,7 +377,7 @@ class ProcedureImageUploadTests(TestCase):
 
         payload = {
             'name': 'temp',
-            'speciality': 'orthopedics',
+            'speciality': [self.speciality.pk],
             'image': 'invalid image',
             'overview': 'bla bla bla'
         }
